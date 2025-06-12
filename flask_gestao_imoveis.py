@@ -59,7 +59,7 @@ def gerar_mapa(df_imoveis):
         try:
             lat = float(row["Latitude"])
             lon = float(row["Longitude"])
-            popup = f"{row['Descrição']}<br>{row['Preço/Noite (€)']}€/noite"
+            popup = f"{row['Descrição']}"
             folium.Marker([lat, lon], popup=popup).add_to(mapa)
         except:
             continue
@@ -165,11 +165,9 @@ def privado():
     # Atualiza os dados mais recentes da sheet
     df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
     df_clientes = pd.DataFrame(sh.worksheet("Clientes").get_all_records())
-    df_reservas = pd.DataFrame(sh.worksheet("Reservas").get_all_records())
 
     df_imoveis_filt = df_imoveis.copy()
     df_clientes_filt = df_clientes.copy()
-    df_reservas_filt = df_reservas.copy()
 
     if request.method == "POST":
         local = request.form.get("local")
@@ -195,44 +193,6 @@ def privado():
 
         if email_reserva and "Email_Cliente" in df_reservas_filt.columns:
             df_reservas_filt = df_reservas_filt[df_reservas_filt["Email_Cliente"].astype(str).str.contains(email_reserva, case=False, na=False)]
-
-    # ---------- GERAÇÃO DOS GRÁFICOS ----------
-
-    def gerar_grafico_base64(fig):
-        buffer = BytesIO()
-        fig.savefig(buffer, format='png', bbox_inches='tight')
-        buffer.seek(0)
-        return base64.b64encode(buffer.getvalue()).decode()
-
-    # Prepara dados
-    df_reservas["Data Início"] = pd.to_datetime(df_reservas["Data Início"])
-    df_reservas["Data Fim"] = pd.to_datetime(df_reservas["Data Fim"])
-    df_reservas["Dias Ocupados"] = (df_reservas["Data Fim"] - df_reservas["Data Início"]).dt.days + 1
-
-
-    # 2. Reservas por mês
-    df_reservas["AnoMes"] = df_reservas["Data Início"].dt.to_period("M").astype(str)
-    reservas_mes = df_reservas.groupby("AnoMes").size()
-
-    fig2, ax2 = plt.subplots()
-    reservas_mes.plot(kind="bar", ax=ax2, color='lightgreen')
-    ax2.set_title("Reservas por Mês")
-    ax2.set_ylabel("Nº de Reservas")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    grafico2 = gerar_grafico_base64(fig2)
-    plt.close(fig2)
-
-    # 3. Reservas por imóvel
-    reservas_imovel = df_reservas["Imóvel (chave)"].value_counts()
-
-    fig3, ax3 = plt.subplots()
-    reservas_imovel.plot(kind="pie", autopct='%1.1f%%', startangle=90, ax=ax3)
-    ax3.set_ylabel("")
-    ax3.set_title("Distribuição de Reservas por Imóvel")
-    plt.tight_layout()
-    grafico3 = gerar_grafico_base64(fig3)
-    plt.close(fig3)
 
     # ---------- HTML ----------
 
@@ -266,7 +226,6 @@ def privado():
 
     # Tabelas
     tabela_clientes = df_clientes_filt.to_html(classes='table table-striped', index=False)
-    tabela_reservas = df_reservas_filt.to_html(classes='table table-striped', index=False)
     tabela_imoveis = df_imoveis_filt.to_html(classes='table table-striped', index=False)
 
     # Conteúdo HTML final
@@ -276,16 +235,9 @@ def privado():
     
     <h2>Clientes</h2>
     {tabela_clientes}
-    <h2>Reservas</h2>
-    {tabela_reservas}
     <h2>Imóveis - Detalhes</h2>
     {tabela_imoveis}
 
-     <h2>Gráficos de Análise</h2>
-    <div class="row">
-        <div class="col-md-6"><img src="data:image/png;base64,{grafico2}" class="img-fluid"></div>
-        <div class="col-md-6"><img src="data:image/png;base64,{grafico3}" class="img-fluid"></div>
-    </div>
     """
 
     return render_template_string(TEMPLATE_BASE, titulo="Área Privada", conteudo=conteudo)
