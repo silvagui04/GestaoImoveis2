@@ -92,11 +92,3 @@ pip install -r requirements.txt
 python flask_gestao_imoveis.py
 ```
 
----
-
-## 🔄 Funcionalidades Futuras (sugestões)
-
-- Upload de novos imóveis via formulário
-- Exportação em CSV/PDF
-- Autenticação por utilizador (multiuser)
-- Dashboard de reservas e histórico de clientes
