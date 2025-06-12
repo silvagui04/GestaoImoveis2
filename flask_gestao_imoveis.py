@@ -4,25 +4,23 @@ import gspread
 import pandas as pd
 from google.oauth2.service_account import Credentials
 import folium
-import os
 import json
-import unicodedata
+import os
 
-# Configuração de autenticação Google
+# Autenticação Google
 scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 service_account_info = json.loads(os.environ['GOOGLE_CREDENTIALS'])
 credentials = Credentials.from_service_account_info(service_account_info, scopes=scopes)
 client = gspread.authorize(credentials)
 
-# Acessa a planilha
+# ID da planilha
 SHEET_ID = "13PIgTsoYnr4z5ihe0CR8zXghlXaAXc__BOxS8HigXqM"
 sh = client.open_by_key(SHEET_ID)
 
-# Flask App
+# Flask
 app = Flask(__name__)
 SENHA_PRIVADA = "1234"
 
-# Template HTML base
 TEMPLATE_BASE = """
 <!DOCTYPE html>
 <html lang="pt">
@@ -31,16 +29,9 @@ TEMPLATE_BASE = """
     <title>{{ titulo }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-        .table th, .table td {
-            text-align: center;
-            vertical-align: middle;
-        }
-        body {
-            margin: 20px;
-        }
-        .nav-buttons {
-            margin-top: 20px;
-        }
+        body { margin: 20px; }
+        .table th, .table td { text-align: center; vertical-align: middle; }
+        .nav-buttons { margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -61,47 +52,22 @@ TEMPLATE_BASE = """
 </html>
 """
 
-# Função para normalizar texto
-def normalizar(texto):
-    if not isinstance(texto, str):
-        texto = str(texto)
-    return unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('ASCII').lower()
-
-# Geração de mapa com imóveis
-def gerar_mapa(df_imoveis):
-    mapa = folium.Map(location=[38.7169, -9.1399], zoom_start=6)
-    for _, row in df_imoveis.iterrows():
-        try:
-            lat = float(row["Latitude"])
-            lon = float(row["Longitude"])
-            popup = f"{row['Descrição']}"
-            folium.Marker([lat, lon], popup=popup).add_to(mapa)
-        except:
-            continue
-    return mapa._repr_html_()
-
-# Página inicial com imóveis disponíveis
 @app.route("/")
 def home():
     df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
-    mapa_html = gerar_mapa(df_imoveis)
-    tabela_html = df_imoveis[["Localização", "Preço/Noite (€)", "Descrição"]].to_html(
+    tabela_html = df_imoveis[["Nome", "Cidade", "Rua", "Estrutura"]].to_html(
         classes='table table-bordered table-hover', index=False, border=0
     )
     conteudo = f"""
-    <div id="map-container" style="height: 300px; overflow: hidden; margin-bottom: 20px;">
-        {mapa_html}
-    </div>
     <div class="tabela-wrapper">
         <h2>Lista de Imóveis</h2>
-        <div style="max-height: 300px; overflow-y: auto;">
+        <div style="max-height: 400px; overflow-y: auto;">
             {tabela_html}
         </div>
     </div>
     """
     return render_template_string(TEMPLATE_BASE, titulo="Imóveis Disponíveis", conteudo=conteudo)
 
-# Página de login para área privada
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -110,6 +76,7 @@ def login():
             return redirect(url_for("privado"))
         else:
             return render_template_string(TEMPLATE_BASE, titulo="Login", conteudo="<p>Senha incorreta!</p>")
+
     conteudo = """
     <form method="POST" class="mt-4">
         <input type="password" name="senha" class="form-control mb-2" placeholder="Digite a senha">
@@ -118,73 +85,22 @@ def login():
     """
     return render_template_string(TEMPLATE_BASE, titulo="Login - Área Privada", conteudo=conteudo)
 
-# Área privada com filtros para imóveis e clientes
-@app.route("/privado", methods=["GET", "POST"])
+@app.route("/privado")
 def privado():
     df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
     df_clientes = pd.DataFrame(sh.worksheet("Clientes").get_all_records())
 
-    df_imoveis_filt = df_imoveis.copy()
-    df_clientes_filt = df_clientes.copy()
-
-    if request.method == "POST":
-        local = request.form.get("local")
-        preco_min = request.form.get("preco_min")
-        preco_max = request.form.get("preco_max")
-        nome_cliente = request.form.get("nome_cliente")
-        email_cliente = request.form.get("email_cliente")
-
-        if local:
-            df_imoveis_filt = df_imoveis_filt[df_imoveis_filt["Localização"].apply(
-                lambda x: local.lower() in normalizar(x))]
-        if preco_min:
-            df_imoveis_filt = df_imoveis_filt[df_imoveis_filt["Preço/Noite (€)"] >= float(preco_min)]
-        if preco_max:
-            df_imoveis_filt = df_imoveis_filt[df_imoveis_filt["Preço/Noite (€)"] <= float(preco_max)]
-        if nome_cliente:
-            df_clientes_filt = df_clientes_filt[df_clientes_filt["Nome"].apply(
-                lambda x: nome_cliente.lower() in normalizar(x))]
-        if email_cliente:
-            df_clientes_filt = df_clientes_filt[df_clientes_filt["Email"].str.contains(email_cliente, case=False)]
-
-    filtros_html = """
-    <form method="POST" class="mb-4">
-        <h4>Filtros de Imóveis</h4>
-        <div class="row mb-3">
-            <div class="col-md-3"><input type="text" name="local" class="form-control" placeholder="Localização"></div>
-            <div class="col-md-2"><input type="number" step="0.01" name="preco_min" class="form-control" placeholder="Preço Mínimo"></div>
-            <div class="col-md-2"><input type="number" step="0.01" name="preco_max" class="form-control" placeholder="Preço Máximo"></div>
-        </div>
-        <h4>Filtros de Clientes</h4>
-        <div class="row mb-3">
-            <div class="col-md-3"><input type="text" name="nome_cliente" class="form-control" placeholder="Nome do Cliente"></div>
-            <div class="col-md-3"><input type="text" name="email_cliente" class="form-control" placeholder="Email"></div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-            </div>
-            <div class="col-md-2">
-                <a href="/privado" class="btn btn-secondary w-100">Repor</a>
-            </div>
-        </div>
-    </form>
-    """
-
-    tabela_clientes = df_clientes_filt.to_html(classes='table table-striped', index=False)
-    tabela_imoveis = df_imoveis_filt.to_html(classes='table table-striped', index=False)
+    tabela_clientes = df_clientes.to_html(classes='table table-striped', index=False)
+    tabela_imoveis = df_imoveis.to_html(classes='table table-striped', index=False)
 
     conteudo = f"""
-    {filtros_html}
     <h2>Clientes</h2>
     {tabela_clientes}
     <h2>Imóveis - Detalhes</h2>
     {tabela_imoveis}
     """
-
     return render_template_string(TEMPLATE_BASE, titulo="Área Privada", conteudo=conteudo)
 
-# Inicialização do servidor
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
