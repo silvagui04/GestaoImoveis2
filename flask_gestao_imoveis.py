@@ -28,11 +28,6 @@ TEMPLATE_BASE = """
     <meta charset="UTF-8">
     <title>{{ titulo }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        th {
-            text-align: center !important;
-        }
-    </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
     <div class="max-w-6xl mx-auto px-4 py-8">
