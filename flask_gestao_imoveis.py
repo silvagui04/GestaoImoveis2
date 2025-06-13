@@ -51,7 +51,7 @@ TEMPLATE_BASE = """
             <hr>
             <p>
                 <a href="https://github.com/silvagui04/GestaoImoveis2/tree/main" target="_blank">GitHub</a> |
-                <a href="https://docs.google.com/document/d/1pRScDde4t2-orWBHa1JCA4LnXiDHR9qztdFvIv1YUl0/edit?tab=t.0#heading=h.cf0piy8x7mqc" target="_blank">Relatório</a>
+                <a href="https://docs.google.com/document/d/1pRScDde4t2-orWBHa1JCA4LnXiDHR9qztdFvIv1YUl0/edit?usp=sharing" target="_blank">Relatório</a>
             </p>
         </footer>
     </div>
