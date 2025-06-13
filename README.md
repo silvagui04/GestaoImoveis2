@@ -65,7 +65,7 @@ Esta aplicação Flask permite a gestão e visualização de imóveis e clientes
   A variável de ambiente `GOOGLE_CREDENTIALS` deve conter o JSON das credenciais.
 
 - **Senha de acesso privado:**  
-  ##1234
+  ## 1234
 
 ---
 
