@@ -92,3 +92,9 @@ pip install -r requirements.txt
 python flask_gestao_imoveis.py
 ```
 
+## 📌 Links de acesso
+### Google Sheets com os dados
+**https://docs.google.com/spreadsheets/d/13PIgTsoYnr4z5ihe0CR8zXghlXaAXc__BOxS8HigXqM/edit?gid=0#gid=0**
+
+### Link página
+**https://gestaoimoveis2.onrender.com**
