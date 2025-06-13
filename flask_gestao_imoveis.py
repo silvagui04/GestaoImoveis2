@@ -21,49 +21,51 @@ sh = client.open_by_key(SHEET_ID)
 app = Flask(__name__)
 SENHA_PRIVADA = "1234"
 
+# Template HTML com Bulma
 TEMPLATE_BASE = """
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <title>{{ titulo }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <style>
         body { margin: 20px; }
         h1 {
-            color: #2c3e50; /* azul escuro */
+            color: #2c3e50;
             font-weight: bold;
         }
         h2 {
-            color: #16a085; /* verde petróleo */
+            color: #16a085;
             margin-top: 20px;
             font-weight: 600;
         }
-        .table th, .table td { text-align: center; vertical-align: middle; }
         .nav-buttons { margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>{{ titulo }}</h1>
-        <div class="nav-buttons">
-            {% if titulo != "Área Privada - Login" %}
-                <a class="btn btn-primary" href="/">Início</a>
-            {% endif %}
-            {% if titulo == "Imóveis Disponíveis" %}
-                <a class="btn btn-secondary" href="/login">Área Privada</a>
-            {% endif %}
-        </div>
-        <hr>
-        {{ conteudo|safe }}
-        <footer class="mt-4 text-center">
+    <section class="section">
+        <div class="container">
+            <h1 class="title">{{ titulo }}</h1>
+            <div class="nav-buttons buttons">
+                {% if titulo != "Área Privada - Login" %}
+                    <a class="button is-primary" href="/">Início</a>
+                {% endif %}
+                {% if titulo == "Imóveis Disponíveis" %}
+                    <a class="button is-link" href="/login">Área Privada</a>
+                {% endif %}
+            </div>
             <hr>
-            <p>
-                <a href="https://github.com/silvagui04/GestaoImoveis2/tree/main" target="_blank">GitHub</a> |
-                <a href="https://docs.google.com/document/d/1pRScDde4t2-orWBHa1JCA4LnXiDHR9qztdFvIv1YUl0/edit?usp=sharing" target="_blank">Relatório</a>
-            </p>
-        </footer>
-    </div>
+            {{ conteudo|safe }}
+            <footer class="footer mt-4 has-text-centered">
+                <hr>
+                <p>
+                    <a href="https://github.com/silvagui04/GestaoImoveis2/tree/main" target="_blank">GitHub</a> |
+                    <a href="https://docs.google.com/document/d/1pRScDde4t2-orWBHa1JCA4LnXiDHR9qztdFvIv1YUl0/edit?usp=sharing" target="_blank">Relatório</a>
+                </p>
+            </footer>
+        </div>
+    </section>
 </body>
 </html>
 """
@@ -72,15 +74,15 @@ TEMPLATE_BASE = """
 def home():
     df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
     tabela_html = df_imoveis[["Nome", "Cidade", "Rua", "Estrutura"]].to_html(
-        classes='table table-bordered table-hover', index=False, border=0
+        classes='table is-striped is-bordered is-hoverable', index=False, border=0
     )
     conteudo = f"""
-    <div class="tabela-wrapper">
-        <h2>Lista de Imóveis</h2>
+    <div class="box">
+        <h2 class="subtitle">Lista de Imóveis</h2>
         <div style="max-height: 400px; overflow-y: auto;">
             {tabela_html}
         </div>
-        <a href="/mapa" class="btn btn-info mt-3">Ver Mapa dos Imóveis</a>
+        <a href="/mapa" class="button is-info mt-3">Ver Mapa dos Imóveis</a>
     </div>
     """
     return render_template_string(TEMPLATE_BASE, titulo="Imóveis Disponíveis", conteudo=conteudo)
@@ -92,12 +94,16 @@ def login():
         if senha == SENHA_PRIVADA:
             return redirect(url_for("privado"))
         else:
-            return render_template_string(TEMPLATE_BASE, titulo="Login", conteudo="<p>Palavra passe incorreta!</p>")
+            return render_template_string(TEMPLATE_BASE, titulo="Login", conteudo="<p class='has-text-danger'>Palavra passe incorreta!</p>")
 
     conteudo = """
     <form method="POST" class="mt-4">
-        <input type="password" name="senha" class="form-control mb-2" placeholder="Digite a senha">
-        <button type="submit" class="btn btn-primary">Entrar</button>
+        <div class="field">
+            <div class="control">
+                <input type="password" name="senha" class="input mb-2" placeholder="Digite a senha">
+            </div>
+        </div>
+        <button type="submit" class="button is-primary">Entrar</button>
     </form>
     """
     return render_template_string(TEMPLATE_BASE, titulo="Login - Área Privada", conteudo=conteudo)
@@ -107,14 +113,14 @@ def privado():
     df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
     df_clientes = pd.DataFrame(sh.worksheet("Clientes").get_all_records())
 
-    tabela_clientes = df_clientes.to_html(classes='table table-striped', index=False)
-    tabela_imoveis = df_imoveis.to_html(classes='table table-striped', index=False)
+    tabela_clientes = df_clientes.to_html(classes='table is-striped is-bordered is-hoverable', index=False)
+    tabela_imoveis = df_imoveis.to_html(classes='table is-striped is-bordered is-hoverable', index=False)
 
     conteudo = f"""
-    <h2>Clientes</h2>
-    {tabela_clientes}
-    <h2>Imóveis - Detalhes</h2>
-    {tabela_imoveis}
+    <h2 class="subtitle">Clientes</h2>
+    <div class="box">{tabela_clientes}</div>
+    <h2 class="subtitle">Imóveis - Detalhes</h2>
+    <div class="box">{tabela_imoveis}</div>
     """
     return render_template_string(TEMPLATE_BASE, titulo="Área Privada", conteudo=conteudo)
 
@@ -138,8 +144,8 @@ def mapa():
     mapa_html = mapa._repr_html_()
 
     conteudo = f"""
-    <h2>Localização dos Imóveis</h2>
-    <div style="height: 500px;">
+    <h2 class="subtitle">Localização dos Imóveis</h2>
+    <div style="height: 500px;" class="box">
         {mapa_html}
     </div>
     """
