@@ -70,7 +70,7 @@ TEMPLATE_BASE = """
 
 @app.route("/")
 def home():
-    df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
+    df_imoveis = pd.DataFrame(sh.worksheet("Imóveis").get_all_records())
     tabela_html = df_imoveis[["Nome", "Cidade", "Rua", "Estrutura"]].to_html(
         classes='table table-bordered table-hover', index=False, border=0
     )
@@ -92,11 +92,11 @@ def login():
         if senha == SENHA_PRIVADA:
             return redirect(url_for("privado"))
         else:
-            return render_template_string(TEMPLATE_BASE, titulo="Login", conteudo="<p>Senha incorreta!</p>")
+            return render_template_string(TEMPLATE_BASE, titulo="Login", conteudo="<p>Palavra passe incorreta!</p>")
 
     conteudo = """
     <form method="POST" class="mt-4">
-        <input type="password" name="senha" class="form-control mb-2" placeholder="Digite a senha">
+        <input type="password" name="senha" class="form-control mb-2" placeholder="Digite a Palavra passe">
         <button type="submit" class="btn btn-primary">Entrar</button>
     </form>
     """
@@ -104,7 +104,7 @@ def login():
 
 @app.route("/privado")
 def privado():
-    df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
+    df_imoveis = pd.DataFrame(sh.worksheet("Imóveis").get_all_records())
     df_clientes = pd.DataFrame(sh.worksheet("Clientes").get_all_records())
 
     tabela_clientes = df_clientes.to_html(classes='table table-striped', index=False)
@@ -120,7 +120,7 @@ def privado():
 
 @app.route("/mapa")
 def mapa():
-    df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
+    df_imoveis = pd.DataFrame(sh.worksheet("Imóveis").get_all_records())
 
     if "Latitude" not in df_imoveis.columns or "Longitude" not in df_imoveis.columns:
         return render_template_string(TEMPLATE_BASE, titulo="Mapa de Imóveis", conteudo="<p>Colunas de localização ausentes.</p>")
