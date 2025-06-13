@@ -30,6 +30,15 @@ TEMPLATE_BASE = """
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         body { margin: 20px; }
+        h1 {
+            color: #2c3e50; /* azul escuro */
+            font-weight: bold;
+        }
+        h2 {
+            color: #16a085; /* verde petróleo */
+            margin-top: 20px;
+            font-weight: 600;
+        }
         .table th, .table td { text-align: center; vertical-align: middle; }
         .nav-buttons { margin-top: 20px; }
     </style>
