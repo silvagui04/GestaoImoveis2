@@ -47,6 +47,13 @@ TEMPLATE_BASE = """
         </div>
         <hr>
         {{ conteudo|safe }}
+        <footer class="mt-4 text-center">
+            <hr>
+            <p>
+                <a href="https://github.com/silvagui04/GestaoImoveis2/tree/main" target="_blank">GitHub</a> |
+                <a href="https://exemplo.com/link2" target="_blank">Relatório</a>
+            </p>
+        </footer>
     </div>
 </body>
 </html>
@@ -64,6 +71,7 @@ def home():
         <div style="max-height: 400px; overflow-y: auto;">
             {tabela_html}
         </div>
+        <a href="/mapa" class="btn btn-info mt-3">Ver Mapa dos Imóveis</a>
     </div>
     """
     return render_template_string(TEMPLATE_BASE, titulo="Imóveis Disponíveis", conteudo=conteudo)
@@ -100,6 +108,33 @@ def privado():
     {tabela_imoveis}
     """
     return render_template_string(TEMPLATE_BASE, titulo="Área Privada", conteudo=conteudo)
+
+@app.route("/mapa")
+def mapa():
+    df_imoveis = pd.DataFrame(sh.worksheet("Imoveis").get_all_records())
+
+    if "Latitude" not in df_imoveis.columns or "Longitude" not in df_imoveis.columns:
+        return render_template_string(TEMPLATE_BASE, titulo="Mapa de Imóveis", conteudo="<p>Colunas de localização ausentes.</p>")
+
+    mapa = folium.Map(location=[39.5, -8.0], zoom_start=6)
+
+    for _, row in df_imoveis.iterrows():
+        if pd.notnull(row["Latitude"]) and pd.notnull(row["Longitude"]):
+            folium.Marker(
+                location=[row["Latitude"], row["Longitude"]],
+                popup=row.get("Nome", "Imóvel"),
+                tooltip=row.get("Cidade", "")
+            ).add_to(mapa)
+
+    mapa_html = mapa._repr_html_()
+
+    conteudo = f"""
+    <h2>Localização dos Imóveis</h2>
+    <div style="height: 500px;">
+        {mapa_html}
+    </div>
+    """
+    return render_template_string(TEMPLATE_BASE, titulo="Mapa de Imóveis", conteudo=conteudo)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
